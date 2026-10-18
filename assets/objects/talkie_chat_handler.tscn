@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bfufopojcq3xi"]
+
+[ext_resource type="Script" uid="uid://bpck055d6lcik" path="res://assets/scripts/voicechat_handler.gd" id="1_ohan2"]
+
+[node name="TalkieChatHandler" type="Node3D" unique_id=57060360]
+script = ExtResource("1_ohan2")
+
+[node name="Voice" type="AudioStreamPlayer" parent="." unique_id=565233735]
+volume_db = 10.0
+bus = &"TalkieChat"
