@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://cngb030otpqho"]
+
+[ext_resource type="Script" uid="uid://dtuohgvccdjcy" path="res://assets/scenes/pickup.gd" id="1_w40cw"]
+[ext_resource type="Texture2D" uid="uid://4mqjnx5m7k1t" path="res://assets/models/players/colormap.png" id="2_ecfaj"]
+[ext_resource type="ArrayMesh" uid="uid://ffr2dicsctys" path="res://assets/models/soda-can.obj" id="3_2ldvc"]
+[ext_resource type="Shader" uid="uid://dwdmongbrpg1o" path="res://assets/scenes/outline_material.gdshader" id="3_pbio1"]
+[ext_resource type="AudioStream" uid="uid://c11x3iyyb3m35" path="res://assets/audio/pickup.mp3" id="7_uds2e"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pbio1"]
+albedo_texture = ExtResource("2_ecfaj")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w40cw"]
+render_priority = 0
+shader = ExtResource("3_pbio1")
+shader_parameter/outline_color = Color(0, 0, 0, 1)
+shader_parameter/outline_threshold = 10.0
+shader_parameter/outline_width = 3.0000001425
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hcayf"]
+radius = 0.6
+
+[node name="Soda" type="Node3D" unique_id=949816725 groups=["revive"]]
+script = ExtResource("1_w40cw")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=65362752]
+transform = Transform3D(0.7666948, 0.64201176, 0, -0.64201176, 0.7666948, 0, 0, 0, 1, -0.118356705, -0.11728069, 0)
+material_override = SubResource("StandardMaterial3D_pbio1")
+material_overlay = SubResource("ShaderMaterial_w40cw")
+mesh = ExtResource("3_2ldvc")
+
+[node name="Area3D" type="Area3D" parent="." unique_id=315434238]
+collision_mask = 3
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=447007743]
+shape = SubResource("SphereShape3D_hcayf")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1820663756]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.1022134, 0)
+light_color = Color(2.3757637, 2.1453598, 0, 1)
+spot_angle = 27.080782
+
+[node name="PickupAudio" type="AudioStreamPlayer3D" parent="." unique_id=2080980637]
+stream = ExtResource("7_uds2e")
+volume_db = -5.0
+unit_size = 5.0
+bus = &"SFX"
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

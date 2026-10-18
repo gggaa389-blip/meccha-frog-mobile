@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://bh1xdcddmx6yh"]
+
+[ext_resource type="PackedScene" uid="uid://dd18gm54ti8d7" path="res://assets/models/table-with-metal-legs/source/model/M_table.fbx" id="1_semj8"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_semj8"]
+size = Vector3(5.454834, 5.515991, 11.838867)
+
+[node name="Table" type="Node3D" unique_id=924435769]
+
+[node name="M_table" parent="." unique_id=1297903054 instance=ExtResource("1_semj8")]
+transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1499314941]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1587150180]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.430359, 0)
+shape = SubResource("BoxShape3D_semj8")

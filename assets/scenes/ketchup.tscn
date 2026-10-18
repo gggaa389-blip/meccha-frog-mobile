@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://cok3q2p33a4bc"]
+
+[ext_resource type="Script" uid="uid://dtuohgvccdjcy" path="res://assets/scenes/pickup.gd" id="1_5k7ps"]
+[ext_resource type="ArrayMesh" uid="uid://dt33p7g0uf2r7" path="res://assets/models/bottle-ketchup.obj" id="1_23cys"]
+[ext_resource type="Texture2D" uid="uid://4mqjnx5m7k1t" path="res://assets/models/players/colormap.png" id="2_0wavc"]
+[ext_resource type="Shader" uid="uid://dwdmongbrpg1o" path="res://assets/scenes/outline_material.gdshader" id="3_dmci1"]
+[ext_resource type="AudioStream" uid="uid://c11x3iyyb3m35" path="res://assets/audio/pickup.mp3" id="6_6kb8v"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5k7ps"]
+albedo_texture = ExtResource("2_0wavc")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_23cys"]
+render_priority = 0
+shader = ExtResource("3_dmci1")
+shader_parameter/outline_color = Color(0, 0, 0, 1)
+shader_parameter/outline_threshold = 10.0
+shader_parameter/outline_width = 3.0000001425
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hcayf"]
+radius = 0.6
+
+[node name="Ketchup" type="Node3D" unique_id=949816725 groups=["gun"]]
+script = ExtResource("1_5k7ps")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=806419290]
+transform = Transform3D(0.7666947, 0.6420118, 0, -0.6420118, 0.7666947, 0, 0, 0, 1, -0.05663395, -0.12944886, 0)
+material_override = SubResource("StandardMaterial3D_5k7ps")
+material_overlay = SubResource("ShaderMaterial_23cys")
+mesh = ExtResource("1_23cys")
+
+[node name="Area3D" type="Area3D" parent="." unique_id=315434238]
+collision_mask = 3
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=447007743]
+shape = SubResource("SphereShape3D_hcayf")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1820663756]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.1022134, 0)
+light_color = Color(2.3757637, 2.1453598, 0, 1)
+spot_angle = 27.080782
+
+[node name="PickupAudio" type="AudioStreamPlayer3D" parent="." unique_id=331034512]
+stream = ExtResource("6_6kb8v")
+volume_db = -5.0
+unit_size = 5.0
+bus = &"SFX"
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

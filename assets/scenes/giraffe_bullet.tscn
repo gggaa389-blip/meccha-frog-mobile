@@ -1,0 +1,99 @@
+[gd_scene format=3 uid="uid://v6atdihmnu1i"]
+
+[ext_resource type="Shader" uid="uid://chxejl0jr2g03" path="res://assets/scenes/giraffe_bullet.gdshader" id="2_gbfoj"]
+
+[sub_resource type="GDScript" id="GDScript_btnnp"]
+script/source = "extends Area3D
+
+
+@export var damage: int = 5
+@export var speed: int = 5
+
+
+
+func _ready() -> void:
+	top_level = true
+
+func _process(delta: float) -> void:
+	translate_object_local(Vector3.FORWARD * speed * delta)
+
+func _on_body_entered(body: Node3D) -> void:
+	if body.is_in_group(\"player\"):
+		body.get_parent().hurt(damage)
+	call_deferred(\"queue_free\")
+
+
+func _on_timer_timeout() -> void:
+	call_deferred(\"queue_free\")
+"
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1xfv1"]
+radius = 0.04
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_3t6mc"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_l6gc7"]
+render_priority = 0
+shader = ExtResource("2_gbfoj")
+shader_parameter/time_speed = 1.0
+shader_parameter/spin = 0.0
+shader_parameter/flame_brightness = 0.6
+shader_parameter/color_intensity = 4.15
+shader_parameter/horizontal_frequency = 1.0
+shader_parameter/vertical_frequency = 1.0
+shader_parameter/size = -0.3
+shader_parameter/core_size = 1.0
+shader_parameter/noise_texture = SubResource("NoiseTexture2D_3t6mc")
+shader_parameter/color1 = Color(0.73, 0.13870001, 0.13870001, 1)
+shader_parameter/color2 = Color(0.98, 0.38, 0.34, 1)
+shader_parameter/color3 = Color(0.98, 0.95, 0.53, 1)
+shader_parameter/color4 = Color(1, 1, 1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_1xfv1"]
+radius = 0.08
+height = 0.16
+
+[sub_resource type="Curve" id="Curve_mbtfw"]
+_data = [Vector2(0.09933776, 0.46661013), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_e0yy4"]
+curve = SubResource("Curve_mbtfw")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_reeje"]
+emission_shape = 1
+emission_sphere_radius = 0.15
+gravity = Vector3(0, 0, 0)
+scale_min = 0.29999998
+scale_max = 0.29999998
+scale_curve = SubResource("CurveTexture_e0yy4")
+
+[sub_resource type="SphereMesh" id="SphereMesh_mxlml"]
+
+[node name="Giraffe Bullet" type="Area3D" unique_id=2131255070]
+collision_mask = 2
+monitorable = false
+script = SubResource("GDScript_btnnp")
+damage = 10
+speed = 10
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1955355017]
+shape = SubResource("SphereShape3D_1xfv1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=171054579]
+material_override = SubResource("ShaderMaterial_l6gc7")
+mesh = SubResource("SphereMesh_1xfv1")
+
+[node name="Timer" type="Timer" parent="." unique_id=776497552]
+wait_time = 3.0
+one_shot = true
+autostart = true
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="." unique_id=1940040524]
+amount = 50
+lifetime = 0.5
+process_material = SubResource("ParticleProcessMaterial_reeje")
+draw_pass_1 = SubResource("SphereMesh_mxlml")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://cmrjbegcc14kk"]
+
+[ext_resource type="ArrayMesh" uid="uid://c2awt13ddk23" path="res://assets/models/Buildings/manhole/manhole.obj" id="1_trhdb"]
+[ext_resource type="ArrayMesh" uid="uid://de2u4p52pmpxq" path="res://assets/models/Buildings/manhole/sign.obj" id="2_vqdon"]
+[ext_resource type="ArrayMesh" uid="uid://blwhx2jogvsfq" path="res://assets/models/Buildings/manhole/cone.obj" id="3_fs45n"]
+
+[sub_resource type="GDScript" id="GDScript_trhdb"]
+script/source = "extends Area3D
+
+
+
+
+func _on_body_entered(body: Node3D) -> void:
+	if body.is_in_group(\"player\"):
+		body.get_parent().is_on_manhole = true
+
+
+func _on_body_exited(body: Node3D) -> void:
+	if body.is_in_group(\"player\"):
+		body.get_parent().is_on_manhole = false
+"
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trhdb"]
+height = 0.5
+radius = 0.4
+
+[node name="Manhole" type="Area3D" unique_id=1320566857 groups=["manhole"]]
+transform = Transform3D(2.6, 0, 0, 0, 2.6, 0, 0, 0, 2.6, 0, 0, 0)
+collision_mask = 2
+monitorable = false
+script = SubResource("GDScript_trhdb")
+
+[node name="Manhole" type="MeshInstance3D" parent="." unique_id=1707810637]
+mesh = ExtResource("1_trhdb")
+skeleton = NodePath("../..")
+
+[node name="Sign" type="MeshInstance3D" parent="." unique_id=1068816885]
+transform = Transform3D(0.31400767, 0, 0.2220995, 0, 0.3846154, 0, -0.2220995, 0, 0.31400767, -0.49647117, 0.17094378, -0.002996875)
+mesh = ExtResource("2_vqdon")
+skeleton = NodePath("../..")
+
+[node name="Cone" type="MeshInstance3D" parent="." unique_id=1434200031]
+transform = Transform3D(0.3846154, 0, 0, 0, 0.3846154, 0, 0, 0, 0.3846154, -0.34680188, 0.010215938, -0.038791366)
+mesh = ExtResource("3_fs45n")
+skeleton = NodePath("../..")
+
+[node name="Cone2" type="MeshInstance3D" parent="." unique_id=1027861480]
+transform = Transform3D(-0.2226211, 0.31299093, 0.02013704, -0.30048338, -0.21992056, 0.09630001, 0.08988091, 0.040007688, 0.3718196, -0.27051878, 0.015519548, -0.11775183)
+mesh = ExtResource("3_fs45n")
+skeleton = NodePath("../..")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=735956732]
+shape = SubResource("CylinderShape3D_trhdb")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_body_exited"]

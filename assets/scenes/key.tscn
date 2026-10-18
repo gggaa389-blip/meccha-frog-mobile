@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://dp5em5q2a5u02"]
+
+[ext_resource type="ArrayMesh" uid="uid://duqcrltc1xeel" path="res://assets/models/key/source/Key.obj" id="1_hcayf"]
+[ext_resource type="Script" uid="uid://dtuohgvccdjcy" path="res://assets/scenes/pickup.gd" id="1_qgmlv"]
+[ext_resource type="Texture2D" uid="uid://bqx17saa8iuoo" path="res://assets/models/filing-cabinet-6mb/textures/Filing_Cabinet__BaseColor.png" id="2_52fri"]
+[ext_resource type="Shader" uid="uid://dwdmongbrpg1o" path="res://assets/scenes/outline_material.gdshader" id="2_eci4o"]
+[ext_resource type="Texture2D" uid="uid://b0g2bftub8fdp" path="res://assets/models/filing-cabinet-6mb/textures/Filing_Cabinet__Metallic.png" id="3_qgmlv"]
+[ext_resource type="Texture2D" uid="uid://dipfdwdrqx5n8" path="res://assets/models/filing-cabinet-6mb/textures/Filing_Cabinet__Normal.png" id="4_eci4o"]
+[ext_resource type="Texture2D" uid="uid://dei4k6i86b5qr" path="res://assets/models/filing-cabinet-6mb/textures/Filing_Cabinet__Roughness.png" id="5_bnh5l"]
+[ext_resource type="AudioStream" uid="uid://c11x3iyyb3m35" path="res://assets/audio/pickup.mp3" id="6_52fri"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bnh5l"]
+render_priority = 0
+shader = ExtResource("2_eci4o")
+shader_parameter/outline_color = Color(0, 0, 0, 1)
+shader_parameter/outline_threshold = 10.0
+shader_parameter/outline_width = 4.62000021945
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n5llk"]
+albedo_texture = ExtResource("2_52fri")
+metallic = 1.0
+metallic_texture = ExtResource("3_qgmlv")
+roughness_texture = ExtResource("5_bnh5l")
+normal_enabled = true
+normal_texture = ExtResource("4_eci4o")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hcayf"]
+
+[node name="Key" type="Node3D" unique_id=949816725 groups=["key"]]
+script = ExtResource("1_qgmlv")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=806419290]
+transform = Transform3D(0.46001685, 0.38520712, 0, -0.38520712, 0.46001685, 0, 0, 0, 0.6, 0, 0, 0)
+material_overlay = SubResource("ShaderMaterial_bnh5l")
+mesh = ExtResource("1_hcayf")
+surface_material_override/0 = SubResource("StandardMaterial3D_n5llk")
+
+[node name="Area3D" type="Area3D" parent="." unique_id=315434238]
+collision_mask = 3
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=447007743]
+shape = SubResource("SphereShape3D_hcayf")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1820663756]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.1022134, 0)
+light_color = Color(2.3757637, 2.1453598, 0, 1)
+spot_angle = 27.080782
+
+[node name="PickupAudio" type="AudioStreamPlayer" parent="." unique_id=502315248]
+stream = ExtResource("6_52fri")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]
