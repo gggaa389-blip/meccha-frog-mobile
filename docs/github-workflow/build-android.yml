@@ -1,0 +1,144 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Publish the APK to a GitHub Release"
+        type: boolean
+        default: false
+      release_tag:
+        description: "Release tag (used when publishing)"
+        type: string
+        default: "v1.0.0-mobile"
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: "4.7.2"
+  GODOT_CHANNEL: "stable"
+
+jobs:
+  build:
+    name: APK (Godot Android preset)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check signing secrets are configured
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ] || [ -z "$KS_ALIAS" ]; then
+            echo "::error::Missing ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS secrets. See docs/BUILD.md."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.1"
+
+      - name: Download Godot + export templates
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_CHANNEL}"
+          curl -fsSL -o /tmp/Godot.zip "$base/Godot_v${GODOT_VERSION}-${GODOT_CHANNEL}_linux.x86_64.zip"
+          curl -fsSL -o /tmp/templates.tpz "$base/Godot_v${GODOT_VERSION}-${GODOT_CHANNEL}_export_templates.tpz"
+          unzip -q /tmp/Godot.zip -d /tmp/godot
+          chmod +x "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_CHANNEL}_linux.x86_64"
+          echo "GODOT=/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_CHANNEL}_linux.x86_64" >> "$GITHUB_ENV"
+          TPL="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_CHANNEL}"
+          mkdir -p "$TPL" /tmp/tpz
+          unzip -q /tmp/templates.tpz -d /tmp/tpz
+          cp -a /tmp/tpz/templates/. "$TPL/"
+          cat "$TPL/version.txt"
+
+      - name: Prepare keystores
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/keystores"
+          echo "$KS_B64" | base64 -d > "$HOME/keystores/release.keystore"
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey \
+            -keypass android -keystore "$HOME/keystores/debug.keystore" \
+            -storepass android -dname "CN=Android Debug,O=Android,C=US" \
+            -validity 9999 -keysize 2048
+
+      - name: Import project and configure Android export
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --path . --import 2>&1 | tail -30
+          python3 - <<'PY'
+          import os, pathlib, re
+          settings = pathlib.Path.home() / ".config/godot/editor_settings-4.7.tres"
+          sdk = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME") or "/usr/local/lib/android/sdk"
+          values = {
+              "export/android/java_sdk_path": os.environ["JAVA_HOME"],
+              "export/android/android_sdk_path": sdk,
+              "export/android/debug_keystore": str(pathlib.Path.home() / "keystores/debug.keystore"),
+              "export/android/debug_keystore_user": "androiddebugkey",
+              "export/android/debug_keystore_pass": "android",
+          }
+          text = settings.read_text()
+          for key, value in values.items():
+              line = f'{key} = "{value}"'
+              if re.search(rf"^{re.escape(key)} = .*$", text, re.M):
+                  text = re.sub(rf"^{re.escape(key)} = .*$", line, text, flags=re.M)
+              else:
+                  text = text.replace("[resource]\n", f"[resource]\n{line}\n", 1)
+          settings.write_text(text)
+          print("Editor settings configured for Android export.")
+          PY
+
+      - name: Export release APK
+        env:
+          GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_KEY_ALIAS }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          set -euo pipefail
+          export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$HOME/keystores/release.keystore"
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/keystores/debug.keystore"
+          export TMPDIR="$RUNNER_TEMP"
+          mkdir -p build/android
+          "$GODOT" --headless --path . --export-release "Android" build/android/MecchaFrog.apk
+          ls -lh build/android/MecchaFrog.apk
+
+      - name: Verify APK
+        run: |
+          set -euo pipefail
+          BT="$(echo "$ANDROID_SDK_ROOT/build-tools/35.0.1")"
+          "$BT/apksigner" verify --verbose --print-certs build/android/MecchaFrog.apk | head -20
+          "$BT/zipalign" -c -v 4 build/android/MecchaFrog.apk | tail -3
+          sha256sum build/android/MecchaFrog.apk | tee build/android/MecchaFrog.apk.sha256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MecchaFrog-apk
+          path: |
+            build/android/MecchaFrog.apk
+            build/android/MecchaFrog.apk.sha256
+
+      - name: Publish GitHub Release
+        if: inputs.publish_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          name: Meccha Frog Android ${{ inputs.release_tag }}
+          files: |
+            build/android/MecchaFrog.apk
+            build/android/MecchaFrog.apk.sha256

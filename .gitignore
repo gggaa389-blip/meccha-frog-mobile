@@ -1,0 +1,25 @@
+# Godot 4
+.godot/
+nomedia
+/android/
+.mono/
+data_*/
+mono_crash.*.json
+*.stackdump
+
+# Export output (APKs are distributed via GitHub Releases)
+build/
+*.apk
+*.aab
+*.idsig
+
+# Signing material - NEVER commit
+*.keystore
+*.jks
+keystore.properties
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
